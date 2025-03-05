@@ -11,7 +11,7 @@ func TestRemoveVigPower(t *testing.T) {
 	fmt.Printf("Power:          %-9f\n", RemoveVigPower(1.05, 10.0, 18.5, 19.0))
 	fmt.Printf("Shin:           %-9f\n", RemoveVigShin(1.05, 10.0, 18.53, 19.0))
 	fmt.Printf("Worst-case:     %-9f\n", RemoveVigWorstCase(1.05, 10.0, 18.5, 19.0))
-	
+
 	fmt.Println()
 
 	fmt.Printf("Multiplicative: %-8f\n", RemoveVigMultiplicative(2.85, 1.45))
