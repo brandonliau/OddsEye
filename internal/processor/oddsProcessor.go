@@ -171,12 +171,15 @@ func (p *oddsProcessor) process(wg *sync.WaitGroup, jobs chan []byte, results ch
 					p.logger.Error("Failed to execute odds insertion statement: %v", err)
 					continue
 				}
+				results <- 0
 			}
 		}
 	}
 }
 
 func (p *oddsProcessor) Execute() {
+	start := time.Now()
+
 	jobs := make(chan oddsJob, numWorkers)
 	intermediate := make(chan []byte, numWorkers)
 	results := make(chan int, numWorkers)
@@ -198,6 +201,9 @@ func (p *oddsProcessor) Execute() {
 	util.DistributeJobs(tasks, jobs)
 	p.db.Commit()
 
+	var processed int
 	for range results {
+		processed++
 	}
+	p.logger.Info("Processed %d odds in %v", processed, time.Since(start))
 }

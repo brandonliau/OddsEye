@@ -15,7 +15,7 @@ func main() {
 	db := database.NewSqliteDB("./database.db", logger)
 	defer db.Close()
 
-	fixtureProcessor := processor.NewFixtureProcessor(cfg, db, logger)
+	fixtureProcessor := processor.NewFixturesProcessor(cfg, db, logger)
 	oddsProcessor := processor.NewOddsProcessor(cfg, db, logger)
 
 	err := db.ExecSQLFile("./pkg/database/migrations/tables.sql")

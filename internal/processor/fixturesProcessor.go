@@ -18,7 +18,7 @@ import (
 	"OddsEye/pkg/retryhttp"
 )
 
-type fixtureProcessor struct {
+type fixturesProcessor struct {
 	cfg    *config.ProcessorConfig
 	client *retryhttp.RetryClient
 	query  *sql.Stmt
@@ -31,7 +31,7 @@ type fixtureJob struct {
 	league string
 }
 
-func NewFixtureProcessor(cfg *config.ProcessorConfig, db database.Database, logger logger.Logger) *fixtureProcessor {
+func NewFixturesProcessor(cfg *config.ProcessorConfig, db database.Database, logger logger.Logger) *fixturesProcessor {
 	transport := &http.Transport{
 		MaxIdleConns:        100,
 		MaxIdleConnsPerHost: 100,
@@ -46,7 +46,7 @@ func NewFixtureProcessor(cfg *config.ProcessorConfig, db database.Database, logg
 	query := "INSERT INTO all_fixtures (id, start_date, home_team, away_team, sport, league) VALUES (?, ?, ?, ?, ?, ?)"
 	stmt, _ := db.PrepareExec(query)
 
-	return &fixtureProcessor{
+	return &fixturesProcessor{
 		cfg:    cfg,
 		client: client,
 		query:  stmt,
@@ -55,7 +55,7 @@ func NewFixtureProcessor(cfg *config.ProcessorConfig, db database.Database, logg
 	}
 }
 
-func (p *fixtureProcessor) fetch(wg *sync.WaitGroup, jobs chan fixtureJob, results chan []byte) {
+func (p *fixturesProcessor) fetch(wg *sync.WaitGroup, jobs chan fixtureJob, results chan []byte) {
 	defer wg.Done()
 
 	baseURL := "https://api.opticodds.com/api/v3/fixtures/active"
@@ -103,7 +103,7 @@ func (p *fixtureProcessor) fetch(wg *sync.WaitGroup, jobs chan fixtureJob, resul
 	}
 }
 
-func (p *fixtureProcessor) process(wg *sync.WaitGroup, jobs chan []byte, results chan int) {
+func (p *fixturesProcessor) process(wg *sync.WaitGroup, jobs chan []byte, results chan int) {
 	defer wg.Done()
 
 	for job := range jobs {
@@ -123,12 +123,15 @@ func (p *fixtureProcessor) process(wg *sync.WaitGroup, jobs chan []byte, results
 				p.logger.Error("Failed to execute fixtures insertion statement: %v", err)
 				continue
 			}
+
+			results <- 0
 		}
-		results <- 0
 	}
 }
 
-func (p *fixtureProcessor) Execute() {
+func (p *fixturesProcessor) Execute() {
+	start := time.Now()
+	
 	jobs := make(chan fixtureJob, numWorkers)
 	intermediate := make(chan []byte, numWorkers)
 	results := make(chan int, numWorkers)
@@ -147,6 +150,9 @@ func (p *fixtureProcessor) Execute() {
 	util.DistributeJobs(tasks, jobs)
 	p.db.Commit()
 
+	var processed int
 	for range results {
+		processed++
 	}
+	p.logger.Info("Processed %d fixtures in %v", processed, time.Since(start))	
 }
