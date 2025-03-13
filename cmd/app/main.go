@@ -1,8 +1,7 @@
 package main
 
 import (
-	"OddsEye/internal/repository"
-	"OddsEye/internal/service"
+	"OddsEye/internal/processor"
 	"OddsEye/pkg/config"
 	"OddsEye/pkg/database"
 	"OddsEye/pkg/logger"
@@ -11,11 +10,18 @@ import (
 )
 
 func main() {
-	logger := logger.NewStdLogger(logger.LevelInfo)
-	cfg := config.NewServiceConfig("./config/config.yml", logger)
+	logger := logger.NewStdLogger(logger.LevelDebug)
+	cfg := config.NewProcessorConfig("./config/config.yml", logger)
 	db := database.NewSqliteDB("./database.db", logger)
-	repo := repository.NewOddsRepo()
-	service := service.NewOddsService(cfg, repo, db, logger)
+	defer db.Close()
 
-	service.Start()
+	fixtureProcessor := processor.NewFixtureProcessor(cfg, db, logger)
+	oddsProcessor := processor.NewOddsProcessor(cfg, db, logger)
+
+	err := db.ExecSQLFile("./pkg/database/migrations/tables.sql")
+	if err != nil {
+		logger.Fatal("Failed to perform database migrations: %v", err)
+	}
+	fixtureProcessor.Execute()
+	oddsProcessor.Execute()
 }

@@ -9,6 +9,7 @@ type Database interface {
 	ExecSQLFile(file string) error
 	Exec(query string, args ...any) error
 	Query(query string, args ...any) (*sql.Rows, error)
+	QueryRow(query string, args ...any) (*sql.Row, error)
 	PrepareExec(query string) (*sql.Stmt, error)
 	PrepareQuery(query string) (*sql.Stmt, error)
 	Begin() error

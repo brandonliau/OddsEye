@@ -9,7 +9,7 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-type ServiceConfig struct {
+type ProcessorConfig struct {
 	Token       string
 	Window      int
 	Country     string
@@ -20,8 +20,8 @@ type ServiceConfig struct {
 	logger      logger.Logger
 }
 
-func NewServiceConfig(file string, logger logger.Logger) *ServiceConfig {
-	cfg := &ServiceConfig{
+func NewProcessorConfig(file string, logger logger.Logger) *ProcessorConfig {
+	cfg := &ProcessorConfig{
 		logger: logger,
 	}
 	err := cfg.load(file)
@@ -35,7 +35,7 @@ func NewServiceConfig(file string, logger logger.Logger) *ServiceConfig {
 	return cfg
 }
 
-func (c *ServiceConfig) load(file string) error {
+func (c *ProcessorConfig) load(file string) error {
 	yamlFile, err := os.ReadFile(file)
 	if err != nil {
 		return fmt.Errorf("readfile: %v", err)
@@ -47,9 +47,12 @@ func (c *ServiceConfig) load(file string) error {
 	return nil
 }
 
-func (c *ServiceConfig) validate() error {
+func (c *ProcessorConfig) validate() error {
 	if c.Token == "" {
 		return fmt.Errorf("empty token")
+	}
+	if c.Window == 0 {
+		return fmt.Errorf("empty window")
 	}
 	if len(c.Sports) == 0 {
 		return fmt.Errorf("empty sports")

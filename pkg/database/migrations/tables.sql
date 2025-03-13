@@ -20,9 +20,6 @@ CREATE TABLE IF NOT EXISTS all_odds (
     id TEXT,
     market TEXT,
     selection TEXT,
-    norm_selection TEXT,
-    selection_line TEXT,
-    points REAL,
     sportsbook TEXT,
     price REAL,
     url TEXT,
@@ -33,11 +30,13 @@ CREATE TABLE IF NOT EXISTS fair_odds (
     id TEXT,
     market TEXT,
     selection TEXT,
-    norm_selection TEXT,
-    selection_line TEXT,
-    points REAL,
     sportsbook TEXT,
     price REAL,
+    novig_multiplicative REAL,
+    novig_additive REAL,
+    novig_power REAL,
+    novig_shin REAL,
+    novig_worst_case REAL,
     url TEXT,
     grouping_key TEXT
 ) STRICT;
@@ -51,9 +50,6 @@ CREATE TABLE IF NOT EXISTS arbitrage (
     price_α REAL,
     price_β REAL,
     price_γ REAL,
-    sportsbook_α TEXT, 
-    sportsbook_β TEXT, 
-    sportsbook_γ TEXT, 
     total_implied_probability REAL,
     vig REAL
 ) STRICT;
@@ -61,7 +57,6 @@ CREATE TABLE IF NOT EXISTS arbitrage (
 CREATE TABLE IF NOT EXISTS positive_ev (
     id TEXT,
     market TEXT,
-    sportsbook TEXT,
     selection TEXT,
     price REAL,
     fair_odds REAL,
