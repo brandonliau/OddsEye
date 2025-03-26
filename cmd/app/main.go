@@ -2,6 +2,7 @@ package main
 
 import (
 	"OddsEye/internal/processor"
+	"OddsEye/internal/repository"
 	"OddsEye/pkg/config"
 	"OddsEye/pkg/database"
 	"OddsEye/pkg/logger"
@@ -15,13 +16,15 @@ func main() {
 	db := database.NewSqliteDB("./database.db", logger)
 	defer db.Close()
 
+	repo := repository.NewQueryRepository(db, logger)
 	fixtureProcessor := processor.NewFixturesProcessor(cfg, db, logger)
-	oddsProcessor := processor.NewOddsProcessor(cfg, db, logger)
+	oddsProcessor := processor.NewOddsProcessor(cfg, db, repo, logger)
 
 	err := db.ExecSQLFile("./pkg/database/migrations/tables.sql")
 	if err != nil {
 		logger.Fatal("Failed to perform database migrations: %v", err)
 	}
+	
 	fixtureProcessor.Execute()
 	oddsProcessor.Execute()
 }

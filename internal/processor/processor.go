@@ -5,7 +5,8 @@ import (
 	"io"
 	"net/url"
 	"slices"
-
+	"sync"
+	
 	"OddsEye/pkg/retryhttp"
 )
 
@@ -14,7 +15,9 @@ const (
 	batchSize  = 5
 )
 
-type Processor interface {
+type Processor[T any] interface {
+	fetch(wg *sync.WaitGroup, jobs chan T , results chan []byte)
+	process(wg *sync.WaitGroup, jobs chan []byte, results chan int)
 	Execute()
 }
 

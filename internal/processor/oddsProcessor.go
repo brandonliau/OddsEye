@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"OddsEye/internal/model"
+	"OddsEye/internal/repository"
 	"OddsEye/internal/util"
 
 	"OddsEye/pkg/config"
@@ -25,15 +26,11 @@ type oddsProcessor struct {
 	client *retryhttp.RetryClient
 	query  *sql.Stmt
 	db     database.Database
+	repo   repository.Repository
 	logger logger.Logger
 }
 
-type oddsJob struct {
-	fixtureIDs  []string
-	sportsbooks []string
-}
-
-func NewOddsProcessor(cfg *config.ProcessorConfig, db database.Database, logger logger.Logger) *oddsProcessor {
+func NewOddsProcessor(cfg *config.ProcessorConfig, db database.Database, repo repository.Repository, logger logger.Logger) Processor[oddsJob] {
 	transport := &http.Transport{
 		MaxIdleConns:        100,
 		MaxIdleConnsPerHost: 100,
@@ -53,8 +50,14 @@ func NewOddsProcessor(cfg *config.ProcessorConfig, db database.Database, logger 
 		client: client,
 		query:  stmt,
 		db:     db,
+		repo:   repo,
 		logger: logger,
 	}
+}
+
+type oddsJob struct {
+	fixtureIDs  []string
+	sportsbooks []string
 }
 
 func (p *oddsProcessor) normalizeURL(url string) string {
@@ -84,37 +87,6 @@ func (p *oddsProcessor) groupingKey(normalizedSelection, selection, selectionLin
 	return groupingKey
 }
 
-func (p *oddsProcessor) getFixtures() []string {
-	query := "SELECT id FROM all_fixtures"
-	rows, _ := p.db.Query(query)
-	defer rows.Close()
-
-	var id string
-	fixtures := make([]string, 0)
-	for rows.Next() {
-		err := rows.Scan(&id)
-		if err != nil {
-			p.logger.Error("Failed to scan row: %v", err)
-		}
-		fixtures = append(fixtures, id)
-	}
-
-	return fixtures
-}
-
-func (p *oddsProcessor) getTeams(id string) (string, string) {
-	query := "SELECT home_team, away_team FROM all_fixtures WHERE id = ?"
-	row, _ := p.db.QueryRow(query, id)
-
-	var home, away string
-	err := row.Scan(&home, &away)
-	if err != nil {
-		p.logger.Error("Failed to scan row: %v", err)
-	}
-
-	return home, away
-}
-
 func (p *oddsProcessor) fetch(wg *sync.WaitGroup, jobs chan oddsJob, results chan []byte) {
 	defer wg.Done()
 
@@ -141,7 +113,6 @@ func (p *oddsProcessor) fetch(wg *sync.WaitGroup, jobs chan oddsJob, results cha
 	}
 }
 
-// func (p *oddsProcessor) process(data []byte) error {
 func (p *oddsProcessor) process(wg *sync.WaitGroup, jobs chan []byte, results chan int) {
 	defer wg.Done()
 
@@ -155,7 +126,7 @@ func (p *oddsProcessor) process(wg *sync.WaitGroup, jobs chan []byte, results ch
 		fixtureOdds := fixtureOddsWrapper.Data
 		for _, fixtureOdd := range fixtureOdds {
 			id := fixtureOdd.ID
-			home, away := p.getTeams(id)
+			home, away := p.repo.Teams(id)
 
 			for _, odd := range fixtureOdd.Odds {
 				_, err := p.query.Exec(
@@ -184,7 +155,7 @@ func (p *oddsProcessor) Execute() {
 	intermediate := make(chan []byte, numWorkers)
 	results := make(chan int, numWorkers)
 
-	data := p.getFixtures()
+	data := p.repo.Fixtures()
 	fixtures, sportsbooks := batchJobs(data, p.cfg.Sportsbooks)
 
 	util.LaunchWorkers(numWorkers, jobs, intermediate, p.fetch)

@@ -26,12 +26,7 @@ type fixturesProcessor struct {
 	logger logger.Logger
 }
 
-type fixtureJob struct {
-	sport  string
-	league string
-}
-
-func NewFixturesProcessor(cfg *config.ProcessorConfig, db database.Database, logger logger.Logger) *fixturesProcessor {
+func NewFixturesProcessor(cfg *config.ProcessorConfig, db database.Database, logger logger.Logger) Processor[fixtureJob] {
 	transport := &http.Transport{
 		MaxIdleConns:        100,
 		MaxIdleConnsPerHost: 100,
@@ -53,6 +48,11 @@ func NewFixturesProcessor(cfg *config.ProcessorConfig, db database.Database, log
 		db:     db,
 		logger: logger,
 	}
+}
+
+type fixtureJob struct {
+	sport  string
+	league string
 }
 
 func (p *fixturesProcessor) fetch(wg *sync.WaitGroup, jobs chan fixtureJob, results chan []byte) {
@@ -131,7 +131,7 @@ func (p *fixturesProcessor) process(wg *sync.WaitGroup, jobs chan []byte, result
 
 func (p *fixturesProcessor) Execute() {
 	start := time.Now()
-	
+
 	jobs := make(chan fixtureJob, numWorkers)
 	intermediate := make(chan []byte, numWorkers)
 	results := make(chan int, numWorkers)
@@ -154,5 +154,5 @@ func (p *fixturesProcessor) Execute() {
 	for range results {
 		processed++
 	}
-	p.logger.Info("Processed %d fixtures in %v", processed, time.Since(start))	
+	p.logger.Info("Processed %d fixtures in %v", processed, time.Since(start))
 }
