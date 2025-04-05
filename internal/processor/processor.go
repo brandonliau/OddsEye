@@ -6,7 +6,8 @@ import (
 	"net/url"
 	"slices"
 	"sync"
-	
+
+	"OddsEye/internal/model"
 	"OddsEye/pkg/retryhttp"
 )
 
@@ -16,7 +17,7 @@ const (
 )
 
 type Processor[T any] interface {
-	fetch(wg *sync.WaitGroup, jobs chan T , results chan []byte)
+	fetch(wg *sync.WaitGroup, jobs chan T, results chan []byte)
 	process(wg *sync.WaitGroup, jobs chan []byte, results chan int)
 	Execute()
 }
@@ -38,11 +39,13 @@ func fetchData(baseURL string, params url.Values, client *retryhttp.RetryClient)
 	return body, nil
 }
 
-func batchJobs(fixtures []string, sportsbooks []string) ([][]string, [][]string) {
+func batchJobs(fixtures map[string][]model.SimpleFixture, sportsbooks []string) ([][]model.SimpleFixture, [][]string) {
 	// create fixture batches
-	batchFixtures := make([][]string, 0)
-	for c := range slices.Chunk(fixtures, batchSize) {
-		batchFixtures = append(batchFixtures, c)
+	batchFixtures := make([][]model.SimpleFixture, 0)
+	for _, v := range fixtures {
+		for c := range slices.Chunk(v, batchSize) {
+			batchFixtures = append(batchFixtures, c)
+		}
 	}
 
 	// create sportsbook batches

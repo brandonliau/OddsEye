@@ -1,4 +1,4 @@
-package models
+package model
 
 type FixtureOddsWrapper struct {
 	Data []FixtureOdds `json:"data"`

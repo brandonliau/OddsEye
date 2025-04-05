@@ -1,26 +1,31 @@
 package util
 
 import (
-	"sync"
+	"maps"
+
+	"golang.org/x/exp/constraints"
 )
 
-func LaunchWorkers[T any, K any](numWorkers int, jobs chan T, results chan K, work func(wg *sync.WaitGroup, jobs chan T, results chan K)) {
-	var wg sync.WaitGroup
-	for range numWorkers {
-		wg.Add(1)
-		go work(&wg, jobs, results)
+func Max[T constraints.Ordered](data []T) T {
+	var maxv T
+	for _, i := range data {
+		if i > maxv {
+			maxv = i
+		}
 	}
-	go func() {
-		wg.Wait()
-		close(results)
-	}()
+	return maxv
 }
 
-func DistributeJobs[T any](tasks []T, jobs chan T) {
-	go func() {
-		for _, job := range tasks {
-			jobs <- job
-		}
-		close(jobs)
-	}()
+func Keys[T comparable, K any](data map[T]K) []T {
+	keys := make([]T, 0, len(data))
+	for k := range data {
+		keys = append(keys, k)
+	}
+	return keys
+}
+
+func MapCopy[T comparable, K any](data map[T]K) map[T]K {
+	copy := make(map[T]K)
+	maps.Copy(copy, data)
+	return copy
 }

@@ -1,6 +1,10 @@
 package repository
 
+import (
+	"OddsEye/internal/model"
+)
+
 type Repository interface {
-	Fixtures() []string
+	Fixtures() map[string][]model.SimpleFixture
 	Teams(fixtureID string) (string, string)
 }

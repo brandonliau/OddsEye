@@ -1,7 +1,6 @@
 package processor
 
 import (
-	"database/sql"
 	"encoding/json"
 	"net/http"
 	"net/url"
@@ -19,14 +18,21 @@ import (
 )
 
 type fixturesProcessor struct {
-	cfg    *config.ProcessorConfig
-	client *retryhttp.RetryClient
-	query  *sql.Stmt
-	db     database.Database
-	logger logger.Logger
+	gCfg        *config.GeneralConfig
+	sCfg        *config.SportsConfig
+	client      *retryhttp.RetryClient
+	currentTime string
+	windowTime  string
+	db          database.Database
+	logger      logger.Logger
 }
 
-func NewFixturesProcessor(cfg *config.ProcessorConfig, db database.Database, logger logger.Logger) Processor[fixtureJob] {
+type fixtureJob struct {
+	sport  string
+	league string
+}
+
+func NewFixturesProcessor(gCfg *config.GeneralConfig, sCfg *config.SportsConfig, db database.Database, logger logger.Logger) Processor[fixtureJob] {
 	transport := &http.Transport{
 		MaxIdleConns:        100,
 		MaxIdleConnsPerHost: 100,
@@ -38,34 +44,30 @@ func NewFixturesProcessor(cfg *config.ProcessorConfig, db database.Database, log
 	}
 	client := retryhttp.NewRetryClient(httpClient, logger)
 
-	query := "INSERT INTO all_fixtures (id, start_date, home_team, away_team, sport, league) VALUES (?, ?, ?, ?, ?, ?)"
-	stmt, _ := db.PrepareExec(query)
+	curr := time.Now()
+	currentTime := curr.Format(time.RFC3339)
+	windowTime := curr.AddDate(0, 0, gCfg.Window).Format(time.RFC3339)
 
 	return &fixturesProcessor{
-		cfg:    cfg,
-		client: client,
-		query:  stmt,
-		db:     db,
-		logger: logger,
+		gCfg:        gCfg,
+		sCfg:        sCfg,
+		client:      client,
+		currentTime: currentTime,
+		windowTime:  windowTime,
+		db:          db,
+		logger:      logger,
 	}
-}
-
-type fixtureJob struct {
-	sport  string
-	league string
 }
 
 func (p *fixturesProcessor) fetch(wg *sync.WaitGroup, jobs chan fixtureJob, results chan []byte) {
 	defer wg.Done()
 
 	baseURL := "https://api.opticodds.com/api/v3/fixtures/active"
-	currentTime := time.Now()
-	windowTime := currentTime.Add(time.Duration(p.cfg.Window*24) * time.Hour)
 
 	params := url.Values{}
-	params.Set("key", p.cfg.Token)
-	params.Set("start_date_after", currentTime.Format(time.RFC3339))
-	params.Set("start_date_before", windowTime.Format(time.RFC3339))
+	params.Set("key", p.gCfg.Token)
+	params.Set("start_date_after", p.currentTime)
+	params.Set("start_date_before", p.windowTime)
 
 	for job := range jobs {
 		params.Set("sport", job.sport)
@@ -76,7 +78,7 @@ func (p *fixturesProcessor) fetch(wg *sync.WaitGroup, jobs chan fixtureJob, resu
 			p.logger.Error("Failed to fetch fixture data: %v", err)
 		}
 
-		var fixturesWrapper models.FixturesWrapper
+		var fixturesWrapper model.FixturesWrapper
 		err = json.Unmarshal(data, &fixturesWrapper)
 		if err != nil {
 			p.logger.Error("Failed to unmarshal fixtures: %v", err)
@@ -106,8 +108,11 @@ func (p *fixturesProcessor) fetch(wg *sync.WaitGroup, jobs chan fixtureJob, resu
 func (p *fixturesProcessor) process(wg *sync.WaitGroup, jobs chan []byte, results chan int) {
 	defer wg.Done()
 
+	query := "INSERT INTO all_fixtures (id, start_date, home_team, away_team, sport, league) VALUES (?, ?, ?, ?, ?, ?)"
+	stmt, _ := p.db.PrepareExec(query)
+
 	for job := range jobs {
-		var fixturesWrapper models.FixturesWrapper
+		var fixturesWrapper model.FixturesWrapper
 		err := json.Unmarshal(job, &fixturesWrapper)
 		if err != nil {
 			p.logger.Error("Failed to unmarshal fixtures: %v", err)
@@ -118,7 +123,7 @@ func (p *fixturesProcessor) process(wg *sync.WaitGroup, jobs chan []byte, result
 			if !fixture.HasOdds {
 				continue
 			}
-			_, err := p.query.Exec(fixture.ID, fixture.StartDate, fixture.HomeTeam, fixture.AwayTeam, fixture.Sport.ID, fixture.League.ID)
+			_, err := stmt.Exec(fixture.ID, fixture.StartDate, fixture.HomeTeam, fixture.AwayTeam, fixture.Sport.ID, fixture.League.ID)
 			if err != nil {
 				p.logger.Error("Failed to execute fixtures insertion statement: %v", err)
 				continue
@@ -139,9 +144,9 @@ func (p *fixturesProcessor) Execute() {
 	util.LaunchWorkers(numWorkers, jobs, intermediate, p.fetch)
 	util.LaunchWorkers(numWorkers, intermediate, results, p.process)
 
-	tasks := make([]fixtureJob, 0)
-	for sport, leagues := range p.cfg.Sports {
-		for _, league := range leagues {
+	var tasks []fixtureJob
+	for sport, data := range p.sCfg.Sports {
+		for _, league := range data.Leagues {
 			tasks = append(tasks, fixtureJob{sport, league})
 		}
 	}

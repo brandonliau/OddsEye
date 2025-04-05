@@ -9,19 +9,15 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-type ProcessorConfig struct {
-	Token       string
-	Window      int
-	Country     string
-	State       string
-	Sports      map[string][]string
-	Sportsbooks []string
-	Sharpbooks  []string
-	logger      logger.Logger
+type GeneralConfig struct {
+	Token        string            `yaml:"token"`
+	Window       int               `yaml:"window"`
+	Replacements map[string]string `yaml:"replacements"`
+	logger       logger.Logger     `yaml:"-"`
 }
 
-func NewProcessorConfig(file string, logger logger.Logger) *ProcessorConfig {
-	cfg := &ProcessorConfig{
+func NewGeneralConfig(file string, logger logger.Logger) *GeneralConfig {
+	cfg := &GeneralConfig{
 		logger: logger,
 	}
 	err := cfg.load(file)
@@ -35,7 +31,7 @@ func NewProcessorConfig(file string, logger logger.Logger) *ProcessorConfig {
 	return cfg
 }
 
-func (c *ProcessorConfig) load(file string) error {
+func (c *GeneralConfig) load(file string) error {
 	yamlFile, err := os.ReadFile(file)
 	if err != nil {
 		return fmt.Errorf("readfile: %v", err)
@@ -47,21 +43,12 @@ func (c *ProcessorConfig) load(file string) error {
 	return nil
 }
 
-func (c *ProcessorConfig) validate() error {
+func (c *GeneralConfig) validate() error {
 	if c.Token == "" {
 		return fmt.Errorf("empty token")
 	}
 	if c.Window == 0 {
 		return fmt.Errorf("empty window")
-	}
-	if len(c.Sports) == 0 {
-		return fmt.Errorf("empty sports")
-	}
-	if len(c.Sportsbooks) == 0 {
-		return fmt.Errorf("empty sportsbooks")
-	}
-	if len(c.Sharpbooks) == 0 {
-		return fmt.Errorf("empty sharpbooks")
 	}
 	return nil
 }
