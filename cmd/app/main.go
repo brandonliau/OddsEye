@@ -25,6 +25,7 @@ func main() {
 	oddsProcessor := processor.NewOddsProcessor(gCfg, sCfg, sbCfg, db, repo, logger)
 
 	arbFilter := filter.NewArbitrageFilter(db, repo, logger)
+	fairFilter := filter.NewFairFilter(db, repo, logger)
 
 	err := db.ExecSQLFile("./pkg/database/migrations/tables.sql")
 	if err != nil {
@@ -35,4 +36,5 @@ func main() {
 	oddsProcessor.Execute()
 
 	arbFilter.Execute()
+	fairFilter.Execute()
 }

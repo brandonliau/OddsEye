@@ -30,14 +30,11 @@ CREATE TABLE IF NOT EXISTS fair_odds (
     id TEXT,
     market TEXT,
     selection TEXT,
-    sportsbook TEXT,
-    price REAL,
-    novig_multiplicative REAL,
-    novig_additive REAL,
-    novig_power REAL,
+    novig_mult REAL,
+    novig_add REAL,
+    novig_pow REAL,
     novig_shin REAL,
-    novig_worst_case REAL,
-    url TEXT,
+    novig_wc REAL,
     grouping_key TEXT
 ) STRICT;
 

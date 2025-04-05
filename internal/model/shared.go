@@ -9,3 +9,14 @@ type SimpleFixture struct {
 	ID    string
 	Sport string
 }
+
+type Grouping struct {
+	Id          string
+	Market      string
+	GroupingKey string
+}
+
+type GroupedSelection struct {
+	Group      Grouping
+	Selections map[string]float64
+}

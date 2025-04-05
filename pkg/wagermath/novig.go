@@ -35,38 +35,42 @@ func RemoveVigAdditive(prices ...float64) []float64 {
 }
 
 func RemoveVigPower(prices ...float64) []float64 {
-	count := float64(len(prices))
+	novig := make([]float64, len(prices))
+	copy(novig, prices)
+	count := float64(len(novig))
 	booksum := 0.0
 	delta := math.Inf(1)
 	iterations := 0
 	for delta > ConvergenceThreshold && iterations < MaxIterations {
 		prevBooksum := booksum
-		booksum = TotalImpliedProbability(prices...)
+		booksum = TotalImpliedProbability(novig...)
 		k := math.Log(count) / math.Log(count/booksum)
 		for i := range int(count) {
-			prob := ImpliedProbability(prices[i])
-			prices[i] = 1 / (math.Pow(prob, k))
+			prob := ImpliedProbability(novig[i])
+			novig[i] = 1 / (math.Pow(prob, k))
 		}
 		delta = math.Abs(booksum - prevBooksum)
 		iterations++
 	}
-	return prices
+	return novig
 }
 
 func RemoveVigShin(prices ...float64) []float64 {
-	count := float64(len(prices))
-	booksum := TotalImpliedProbability(prices...)
+	novig := make([]float64, len(prices))
+	copy(novig, prices)
+	count := float64(len(novig))
+	booksum := TotalImpliedProbability(novig...)
 	delta := math.Inf(1)
 	iterations := 0
 	z := 0.0
-	if len(prices) == 2 {
-		diff := ImpliedProbability(prices[0]) - ImpliedProbability(prices[1])
+	if len(novig) == 2 {
+		diff := ImpliedProbability(novig[0]) - ImpliedProbability(novig[1])
 		z = ((booksum - 1) * (diff*diff - booksum)) / (booksum * (diff*diff - 1))
 	} else {
 		for delta > ConvergenceThreshold && iterations < MaxIterations {
 			prevZ := z
 			zSum := 0.0
-			for _, price := range prices {
+			for _, price := range novig {
 				prob := ImpliedProbability(price)
 				term := math.Sqrt((z * z) + 4.0*(1.0-z)*prob*prob/booksum)
 				zSum += term
@@ -76,38 +80,22 @@ func RemoveVigShin(prices ...float64) []float64 {
 			iterations++
 		}
 	}
-	for i, price := range prices {
+	for i, price := range novig {
 		prob := ImpliedProbability(price)
 		term := math.Sqrt((z*z)+4.0*(1.0-z)*prob*prob/booksum) - z
-		prices[i] = 2.0 * (1.0 - z) / term
+		novig[i] = 2.0 * (1.0 - z) / term
 	}
-	return prices
+	return novig
 }
 
-func RemoveVigWorstCase(prices ...float64) []float64 {
-	sum := func(vals []float64) float64 {
-		total := 0.0
-		for _, v := range vals {
-			total += v
-		}
-		return total
-	}
+func RemoveVigWorstCase(methods ...[]float64) []float64 {
+	minv := make([]float64, len(methods[0]))
+	copy(minv, methods[0])
 
-	methods := [][]float64{
-		RemoveVigMultiplicative(prices...),
-		RemoveVigAdditive(prices...),
-		RemoveVigPower(prices...),
-		RemoveVigShin(prices...),
-	}
-
-	var worstCase []float64
-	minv := math.Inf(1)
 	for _, vals := range methods {
-		s := sum(vals)
-		if s < minv {
-			minv = s
-			worstCase = vals
+		for i, val := range vals {
+			minv[i] = min(minv[i], val)
 		}
 	}
-	return worstCase
+	return minv
 }
