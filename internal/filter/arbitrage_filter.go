@@ -28,9 +28,8 @@ func (f *arbitrageFilter) Execute() {
 	jobs := make(chan model.Grouping, numWorkers)
 	results := make(chan model.GroupedSelection, numWorkers)
 
-	util.LaunchWorkers(numWorkers, jobs, results, f.repo.GroupedSelections)
-
 	groupings := f.repo.Groupings()
+	util.LaunchWorkers(numWorkers, jobs, results, f.repo.GroupedSelections)
 	util.DistributeJobs(groupings, jobs)
 
 	q1 := "INSERT INTO arbitrage (id, market, selection_α, selection_β, price_α, price_β, total_implied_probability, vig) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"

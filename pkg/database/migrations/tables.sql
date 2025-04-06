@@ -4,9 +4,6 @@ DROP TABLE IF EXISTS fair_odds;
 DROP TABLE IF EXISTS arbitrage;
 DROP TABLE IF EXISTS positive_ev;
 
-DROP TABLE IF EXISTS all_odds_arbitrage;
-DROP TABLE IF EXISTS all_odds_positive_ev;
-
 CREATE TABLE IF NOT EXISTS all_fixtures (
     id TEXT,
     start_date TEXT,
@@ -30,6 +27,7 @@ CREATE TABLE IF NOT EXISTS fair_odds (
     id TEXT,
     market TEXT,
     selection TEXT,
+    price TEXT,
     novig_mult REAL,
     novig_add REAL,
     novig_pow REAL,
@@ -56,8 +54,8 @@ CREATE TABLE IF NOT EXISTS positive_ev (
     market TEXT,
     selection TEXT,
     price REAL,
-    fair_odds REAL,
-    expected_value REAL
+    fair_price REAL,
+    ev REAL
 ) STRICT;
 
 CREATE INDEX IF NOT EXISTS id_all_fixtures_idx ON all_fixtures(id);

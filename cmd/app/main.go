@@ -26,6 +26,7 @@ func main() {
 
 	arbFilter := filter.NewArbitrageFilter(db, repo, logger)
 	fairFilter := filter.NewFairFilter(db, repo, logger)
+	evFilter := filter.NewEvFilter(db, repo, logger)
 
 	err := db.ExecSQLFile("./pkg/database/migrations/tables.sql")
 	if err != nil {
@@ -37,4 +38,5 @@ func main() {
 
 	arbFilter.Execute()
 	fairFilter.Execute()
+	evFilter.Execute()
 }

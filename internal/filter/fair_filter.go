@@ -30,18 +30,17 @@ func (f *fairFilter) Execute() {
 	jobs := make(chan model.Grouping, numWorkers)
 	results := make(chan model.GroupedSelection, numWorkers)
 
-	util.LaunchWorkers(numWorkers, jobs, results, f.repo.GroupedSelections)
-
 	groupings := f.repo.Groupings()
+	util.LaunchWorkers(numWorkers, jobs, results, f.repo.GroupedSelections)
 	util.DistributeJobs(groupings, jobs)
 
-	query := "INSERT INTO fair_odds (id, market, selection, novig_mult, novig_add, novig_pow, novig_shin, novig_wc, grouping_key) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"
+	query := "INSERT INTO fair_odds (id, market, selection, price, novig_mult, novig_add, novig_pow, novig_shin, novig_wc, grouping_key) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
 	for res := range results {
 		var prices []float64
 		var selections []string
 		for k, v := range res.Selections {
-			selections = append(selections, k)
 			prices = append(prices, v)
+			selections = append(selections, k)
 		}
 
 		if len(selections) != 2 && len(selections) != 3 {
@@ -60,7 +59,7 @@ func (f *fairFilter) Execute() {
 			p := math.Round(pow[i]*100) / 100
 			s := math.Round(shin[i]*100) / 100
 			w := math.Round(wc[i]*100) / 100
-			f.db.Exec(query, res.Group.Id, res.Group.Market, selections[i], m, a, p, s, w, res.Group.GroupingKey)
+			f.db.Exec(query, res.Group.Id, res.Group.Market, selections[i], prices[i], m, a, p, s, w, res.Group.GroupingKey)
 		}
 	}
 }
