@@ -1,7 +1,11 @@
 package filter
 
 import (
+	"math"
+
+	"OddsEye/internal/model"
 	"OddsEye/internal/repository"
+	"OddsEye/internal/util"
 
 	"OddsEye/pkg/database"
 	"OddsEye/pkg/logger"
@@ -23,22 +27,39 @@ func NewEvFilter(db database.Database, repo repository.Repository, logger logger
 }
 
 func (f *evFilter) Execute() {
-	query := "SELECT id, market, selection, price, novig_wc FROM fair_odds WHERE price > novig_wc"
-	rows, err := f.db.Query(query)
-	if err != nil {
-		f.logger.Error("Failed to positive ev odds: %v", err)
-	}
-	defer rows.Close()
+	jobs := make(chan model.Grouping, numWorkers)
+	results := make(chan model.GroupedSelection, numWorkers)
 
-	query = "INSERT INTO positive_ev (id, market, selection, price, fair_price, ev) VALUES (?, ?, ?, ?, ?, ?)"
-	var id, market, selection string
-	var price, wc float64
-	for rows.Next() {
-		err := rows.Scan(&id, &market, &selection, &price, &wc)
-		if err != nil {
-			f.logger.Error("Failed to scan row: %v", err)
+	groupings := f.repo.Groupings()
+	util.LaunchWorkers(numWorkers, jobs, results, f.repo.GroupedSelections)
+	util.DistributeJobs(groupings, jobs)
+
+	query := "INSERT INTO expected_value (id, market, selection, grouping_key, price, novig_mult, novig_add, novig_pow, novig_shin, novig_wc) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+	for res := range results {
+		var prices []float64
+		var selections []string
+		for k, v := range res.Selections {
+			prices = append(prices, v)
+			selections = append(selections, k)
 		}
-		ev := (wagermath.ImpliedProbability(wc) * price) - 1
-		f.db.Exec(query, id, market, selection, price, wc, ev)
+
+		if len(selections) != 2 && len(selections) != 3 {
+			continue
+		}
+
+		mult := wagermath.RemoveVigMultiplicative(prices...)
+		add := wagermath.RemoveVigAdditive(prices...)
+		pow := wagermath.RemoveVigPower(prices...)
+		shin := wagermath.RemoveVigShin(prices...)
+		wc := wagermath.RemoveVigWorstCase(mult, add, pow, shin)
+
+		for i := range selections {
+			m := math.Round(mult[i]*100) / 100
+			a := math.Round(add[i]*100) / 100
+			p := math.Round(pow[i]*100) / 100
+			s := math.Round(shin[i]*100) / 100
+			w := math.Round(wc[i]*100) / 100
+			f.db.Exec(query, res.Group.Id, res.Group.Market, res.Group.GroupingKey, selections[i], prices[i], m, a, p, s, w)
+		}
 	}
 }
