@@ -89,13 +89,13 @@ func RemoveVigShin(prices ...float64) []float64 {
 }
 
 func RemoveVigWorstCase(methods ...[]float64) []float64 {
-	minv := make([]float64, len(methods[0]))
-	copy(minv, methods[0])
+	maxv := make([]float64, len(methods[0]))
+	copy(maxv, methods[0])
 
 	for _, vals := range methods {
 		for i, val := range vals {
-			minv[i] = min(minv[i], val)
+			maxv[i] = max(maxv[i], val)
 		}
 	}
-	return minv
+	return maxv
 }
