@@ -3,7 +3,6 @@ package main
 import (
 	"OddsEye/internal/filter"
 	"OddsEye/internal/processor"
-	"OddsEye/internal/repository"
 
 	"OddsEye/pkg/config"
 	"OddsEye/pkg/database"
@@ -14,27 +13,26 @@ import (
 
 func main() {
 	logger := logger.NewStdLogger(logger.LevelInfo)
-	gCfg := config.NewGeneralConfig("./config/config.yml", logger)
-	sCfg := config.NewSportsConfig("./config/sports.yml", logger)
-	sbCfg := config.NewSportsbooksConfig("./config/sportsbooks.yml", logger)
 	db := database.NewSqliteDB("./database.db", logger)
 	defer db.Close()
-
-	repo := repository.NewQueryRepository(db, logger)
-	fixtureProcessor := processor.NewFixturesProcessor(gCfg, sCfg, db, logger)
-	oddsProcessor := processor.NewOddsProcessor(gCfg, sCfg, sbCfg, db, repo, logger)
-
-	arbFilter := filter.NewArbitrageFilter(db, repo, logger)
-	evFilter := filter.NewEvFilter(db, repo, logger)
 
 	err := db.ExecSQLFile("./pkg/database/migrations/tables.sql")
 	if err != nil {
 		logger.Fatal("Failed to perform database migrations: %v", err)
 	}
 
-	fixtureProcessor.Execute()
-	oddsProcessor.Execute()
+	fixturesConfig := config.NewFixturesConfig("./config/fixtures.yml", logger)
+	oddsConfig := config.NewOddsConfig("./config/odds.yml", logger)
 
-	arbFilter.Execute()
-	evFilter.Execute()
+	fixturesProcessor := processor.NewFixturesProcessor(fixturesConfig, db, logger)
+	oddsProcessor := processor.NewOddsProcessor(oddsConfig, db, logger)
+
+	fixturesProcessor.Process()
+	oddsProcessor.Process()
+
+	arbFilter := filter.NewArbitrageFilter(db, logger)
+	evFilter := filter.NewEvFilter(db, logger)
+
+	arbFilter.Filter()
+	evFilter.Filter()
 }
