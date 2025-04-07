@@ -65,11 +65,11 @@ func (p *oddsProcessor) normalizeURL(url string) string {
 	return url
 }
 
-func (p *oddsProcessor) groupingKey(normalizedSelection, selection, selectionLine, market, home, away string, points *float64) string {
+func (p *oddsProcessor) groupingKey(normalizedSelection, selection, selectionLine, home, away string, points *float64) string {
 	groupingKey := "default"
 	if normalizedSelection != "" && selectionLine != "" && points != nil {
-		groupingKey = fmt.Sprintf("%s:%.1f", normalizedSelection, math.Abs(*points))
-	} else if normalizedSelection != "" && selectionLine != "" && (!strings.Contains(market, "correct_score") && !strings.Contains(market, "set_betting")) {
+		groupingKey = fmt.Sprintf("%s:%.2f", normalizedSelection, math.Abs(*points))
+	} else if normalizedSelection != "" && selectionLine != "" {
 		groupingKey = normalizedSelection
 	} else if points != nil {
 		if selection == home {
@@ -140,7 +140,7 @@ func (p *oddsProcessor) process(wg *sync.WaitGroup, jobs chan []byte, results ch
 					odd.Sportsbook,
 					odd.Price,
 					p.normalizeURL(odd.DeepLink.Desktop),
-					p.groupingKey(odd.NormalizedSelection, odd.Selection, odd.SelectionLine, odd.Market, home, away, odd.Points),
+					p.groupingKey(odd.NormalizedSelection, odd.Selection, odd.SelectionLine, home, away, odd.Points),
 				)
 				if err != nil {
 					p.logger.Error("Failed to execute odds insertion statement: %v", err)

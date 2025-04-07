@@ -18,7 +18,6 @@ type Odd struct {
 	SelectionLine       string   `json:"selection_line"`
 	Points              *float64 `json:"points"`
 	Price               float64  `json:"price"`
-	GroupingKey         string   `json:"grouping_key"`
 	DeepLink            struct {
 		Desktop string `json:"desktop"`
 	} `json:"deep_link"`
