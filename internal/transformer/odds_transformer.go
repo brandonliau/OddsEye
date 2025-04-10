@@ -94,11 +94,12 @@ func (t *OddsTransformer) Transform(wg *sync.WaitGroup, jobs chan []byte, result
 				_, err := stmt.Exec(
 					id,
 					odd.Market,
+					groupingKey(odd.NormalizedSelection, odd.Selection, odd.SelectionLine, home, away, odd.Points),
 					strings.Split(odd.ID, ":")[3],
 					odd.Sportsbook,
 					odd.Price,
 					t.normalizeURL(odd.DeepLink.Desktop),
-					groupingKey(odd.NormalizedSelection, odd.Selection, odd.SelectionLine, home, away, odd.Points),
+					odd.Name,
 				)
 				if err != nil {
 					t.logger.Error("Failed to execute odds insertion statement: %v", err)

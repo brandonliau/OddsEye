@@ -13,6 +13,7 @@ type Odd struct {
 	ID                  string   `json:"id"`
 	Sportsbook          string   `json:"sportsbook"`
 	Market              string   `json:"market_id"`
+	Name                string   `json:"name"`
 	Selection           string   `json:"selection"`
 	NormalizedSelection string   `json:"normalized_selection"`
 	SelectionLine       string   `json:"selection_line"`

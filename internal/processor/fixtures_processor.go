@@ -33,6 +33,11 @@ func NewFixturesProcessor(config *config.FixturesConfig, db database.Database, l
 func (p *fixturesProcessor) Process() {
 	start := time.Now()
 
+	err := p.db.ExecSQLFile("./pkg/database/migrations/all_fixtures.sql")
+	if err != nil {
+		p.logger.Fatal("Failed to create fixtures table")
+	}
+
 	jobs := make(chan fetcher.FixturesFetchJob, p.config.Options.Workers)
 	intermediate := make(chan []byte, p.config.Options.Workers)
 	results := make(chan int, p.config.Options.Workers)

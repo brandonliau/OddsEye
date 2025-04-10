@@ -21,6 +21,11 @@ func NewArbitrageFilter(db database.Database, logger logger.Logger) *arbitrageFi
 }
 
 func (f *arbitrageFilter) Filter() {
+	err := f.db.ExecSQLFile("./pkg/database/migrations/arbitrage.sql")
+	if err != nil {
+		f.logger.Fatal("Failed to create arbitrage table")
+	}
+
 	fixtureGroups := groupedFixtures(f.db, f.logger)
 	selectionGroups := groupedSelections(f.db, f.logger, fixtureGroups)
 

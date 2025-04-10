@@ -24,7 +24,12 @@ func (f *evFilter) Filter() {
 	fixtureGroups := groupedFixtures(f.db, f.logger)
 	selectionGroups := groupedSelections(f.db, f.logger, fixtureGroups)
 
-	query := "INSERT INTO expected_value (id, market, selection, grouping_key, price, novig_mult, novig_add, novig_pow, novig_shin, novig_wc) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+	err := f.db.ExecSQLFile("./pkg/database/migrations/expected_value.sql")
+	if err != nil {
+		f.logger.Fatal("Failed to create expected value table")
+	}
+
+	query := "INSERT INTO expected_value (id, market, grouping_key, selection, price, novig_mult, novig_add, novig_pow, novig_shin, novig_wc) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
 	for _, selectionGroup := range selectionGroups {
 		var prices []float64
 		var selections []string

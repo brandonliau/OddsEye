@@ -16,11 +16,6 @@ func main() {
 	db := database.NewSqliteDB("./database.db", logger)
 	defer db.Close()
 
-	err := db.ExecSQLFile("./pkg/database/migrations/tables.sql")
-	if err != nil {
-		logger.Fatal("Failed to perform database migrations: %v", err)
-	}
-
 	fixturesConfig := config.NewFixturesConfig("./config/fixtures.yml", logger)
 	oddsConfig := config.NewOddsConfig("./config/odds.yml", logger)
 

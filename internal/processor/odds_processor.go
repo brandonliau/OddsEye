@@ -89,6 +89,11 @@ func (p *oddsProcessor) batchJobs(mapped map[string][]struct {
 func (p *oddsProcessor) Process() {
 	start := time.Now()
 
+	err := p.db.ExecSQLFile("./pkg/database/migrations/all_odds.sql")
+	if err != nil {
+		p.logger.Fatal("Failed to create odds table")
+	}
+
 	jobs := make(chan fetcher.OddsFetchJob, p.config.Options.Workers)
 	intermediate := make(chan []byte, p.config.Options.Workers)
 	results := make(chan int, p.config.Options.Workers)
