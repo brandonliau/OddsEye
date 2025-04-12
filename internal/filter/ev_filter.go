@@ -3,9 +3,9 @@ package filter
 import (
 	"math"
 
-	"OddsEye/pkg/database"
-	"OddsEye/pkg/logger"
-	"OddsEye/pkg/wagermath"
+	"odds-eye/pkg/database"
+	"odds-eye/pkg/logger"
+	"odds-eye/pkg/wagermath"
 )
 
 type evFilter struct {

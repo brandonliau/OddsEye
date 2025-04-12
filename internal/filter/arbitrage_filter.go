@@ -1,11 +1,11 @@
 package filter
 
 import (
-	"OddsEye/internal/util"
+	"odds-eye/internal/util"
 
-	"OddsEye/pkg/database"
-	"OddsEye/pkg/logger"
-	"OddsEye/pkg/wagermath"
+	"odds-eye/pkg/database"
+	"odds-eye/pkg/logger"
+	"odds-eye/pkg/wagermath"
 )
 
 type arbitrageFilter struct {

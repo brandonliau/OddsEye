@@ -1,4 +1,4 @@
-module OddsEye
+module odds-eye
 
 go 1.23.1
 

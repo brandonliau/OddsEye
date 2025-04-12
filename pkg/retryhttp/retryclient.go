@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"time"
 
-	"OddsEye/pkg/logger"
+	"odds-eye/pkg/logger"
 )
 
 type RetryClient struct {

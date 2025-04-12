@@ -7,11 +7,11 @@ import (
 	"strings"
 	"sync"
 
-	"OddsEye/internal/model"
+	"odds-eye/internal/model"
 
-	"OddsEye/pkg/config"
-	"OddsEye/pkg/database"
-	"OddsEye/pkg/logger"
+	"odds-eye/pkg/config"
+	"odds-eye/pkg/database"
+	"odds-eye/pkg/logger"
 )
 
 type OddsTransformer struct {

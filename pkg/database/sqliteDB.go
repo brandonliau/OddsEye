@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"os"
 
-	"OddsEye/pkg/logger"
+	"odds-eye/pkg/logger"
 )
 
 type sqliteDB struct {

@@ -6,9 +6,9 @@ import (
 	"sync"
 	"time"
 
-	"OddsEye/pkg/config"
-	"OddsEye/pkg/logger"
-	"OddsEye/pkg/retryhttp"
+	"odds-eye/pkg/config"
+	"odds-eye/pkg/logger"
+	"odds-eye/pkg/retryhttp"
 )
 
 type oddsFetcher struct {

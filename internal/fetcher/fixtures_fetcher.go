@@ -8,11 +8,11 @@ import (
 	"sync"
 	"time"
 
-	"OddsEye/internal/model"
+	"odds-eye/internal/model"
 
-	"OddsEye/pkg/config"
-	"OddsEye/pkg/logger"
-	"OddsEye/pkg/retryhttp"
+	"odds-eye/pkg/config"
+	"odds-eye/pkg/logger"
+	"odds-eye/pkg/retryhttp"
 )
 
 type fixturesFetcher struct {

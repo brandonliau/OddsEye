@@ -1,9 +1,9 @@
 package filter
 
 import (
-	"OddsEye/internal/util"
-	"OddsEye/pkg/database"
-	"OddsEye/pkg/logger"
+	"odds-eye/internal/util"
+	"odds-eye/pkg/database"
+	"odds-eye/pkg/logger"
 )
 
 type Filter interface {

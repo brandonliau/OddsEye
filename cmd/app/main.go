@@ -1,12 +1,12 @@
 package main
 
 import (
-	"OddsEye/internal/filter"
-	"OddsEye/internal/processor"
+	"odds-eye/internal/filter"
+	"odds-eye/internal/processor"
 
-	"OddsEye/pkg/config"
-	"OddsEye/pkg/database"
-	"OddsEye/pkg/logger"
+	"odds-eye/pkg/config"
+	"odds-eye/pkg/database"
+	"odds-eye/pkg/logger"
 
 	_ "modernc.org/sqlite"
 )

@@ -8,7 +8,7 @@ import (
 	"sync"
 	"time"
 
-	"OddsEye/pkg/retryhttp"
+	"odds-eye/pkg/retryhttp"
 )
 
 type Fetcher[T any] interface {

@@ -3,7 +3,7 @@ package config
 import (
 	"fmt"
 
-	"OddsEye/pkg/logger"
+	"odds-eye/pkg/logger"
 )
 
 type GraderConfig struct {

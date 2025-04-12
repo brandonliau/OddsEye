@@ -4,13 +4,13 @@ import (
 	"slices"
 	"time"
 
-	"OddsEye/internal/fetcher"
-	"OddsEye/internal/transformer"
-	"OddsEye/internal/util"
+	"odds-eye/internal/fetcher"
+	"odds-eye/internal/transformer"
+	"odds-eye/internal/util"
 
-	"OddsEye/pkg/config"
-	"OddsEye/pkg/database"
-	"OddsEye/pkg/logger"
+	"odds-eye/pkg/config"
+	"odds-eye/pkg/database"
+	"odds-eye/pkg/logger"
 )
 
 type oddsProcessor struct {
